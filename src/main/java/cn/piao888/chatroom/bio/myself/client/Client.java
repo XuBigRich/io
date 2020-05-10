@@ -1,4 +1,4 @@
-package cn.piao888.chatroom.bio.client;
+package cn.piao888.chatroom.bio.myself.client;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -6,15 +6,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
-import java.net.UnknownHostException;
 
 public class Client {
     public static void main(String[] args) throws IOException {
         String ip = "127.0.0.1";
         int port = 8888;
         Socket socket = null;
-        BufferedWriter write=null;
-        BufferedReader reader=null;
+        BufferedWriter write = null;
+        BufferedReader reader = null;
         try {
             socket = new Socket(ip, port);
             reader = new BufferedReader(
@@ -24,23 +23,34 @@ public class Client {
 
             BufferedReader consoleReader = new BufferedReader(
                     new InputStreamReader(System.in));
-            while(true) {
-                String consoleContent=consoleReader.readLine();
+
+            BufferedReader finalReader = reader;
+            //开启线程单独 接收消息
+            new Thread(() -> {
+                String msg = null;
+                try {
+                    while ((msg = finalReader.readLine()) != null) {
+                        System.out.println(msg);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+
+            while (true) {
+                String consoleContent = consoleReader.readLine();
 //			发送消息给服务器
-                write.write(consoleContent+"\n");
+                write.write(consoleContent + "\n");
                 write.flush();
-                //读取服务器返回消息
-                String msg=reader.readLine();
-                System.out.println(msg);
             }
-        }catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
-        }finally {
-            if(write!=null) {
+        } finally {
+            if (write != null) {
                 try {
                     write.close();
                     System.out.println("关闭socket");
-                }catch(IOException e) {
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
