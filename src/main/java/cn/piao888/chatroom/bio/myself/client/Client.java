@@ -26,7 +26,9 @@ public class Client {
 
             BufferedReader finalReader = reader;
             //开启线程单独 接收消息
+            Socket finalSocket = socket;
             new Thread(() -> {
+                System.out.println(finalSocket.getPort());
                 String msg = null;
                 try {
                     while ((msg = finalReader.readLine()) != null) {
