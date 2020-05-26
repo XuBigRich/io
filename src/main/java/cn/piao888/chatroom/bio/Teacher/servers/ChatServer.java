@@ -8,6 +8,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 学习总结
@@ -21,11 +24,16 @@ public class ChatServer {
     private int DEFAULT_PORT = 8888;
     private static final String QUIT = "quit";
 
+    //线程池实现的统一接口
+    private ExecutorService executorService;
+
     private ServerSocket serverSocket;
     //存储与所有客户端连接的Socket 的Map容器 其是对象变量
     private Map<Integer, Writer> connectedClients;
 
     public ChatServer() {
+        //对于如何选择线程池种类，需要根据需求来定，如当前需求是需要一个固定数量的线程池那么 下面这个FixedThreadPool就可以满足我们的需求
+        executorService= Executors.newFixedThreadPool(3);
         connectedClients = new HashMap<>();
     }
 
@@ -101,11 +109,15 @@ public class ChatServer {
             serverSocket = new ServerSocket(DEFAULT_PORT);
             while (true) {
                 Socket socket = serverSocket.accept();
+                //线程池的启动
+                executorService.execute(new ChatHandler(this,socket));
+
+                //不使用线程池的方案
                 //创建ChatHandler线程
                 //因为存储所有与socket客户端连接的容器 属于服务器的 对象变量 （也就是说属于一个对象）
                 //把当前对象传入，让多线程操作这一个服务对象，以节约服务器资源
-                Thread thread = new Thread(new ChatHandler(this, socket));
-                thread.start();
+//                Thread thread = new Thread(new ChatHandler(this, socket));
+//                thread.start();
             }
         } catch (IOException e) {
             e.printStackTrace();
