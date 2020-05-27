@@ -6,6 +6,49 @@ nio是非阻塞式io
 2.Select可以用于监控多条Channel
 3.可以在一条线程里面，处理多个Channel I/O
 
-
 所以阻塞式I/O给开发带来了极大的局限性，Java也意识到这一点，于是提供了一种Nio的解决方案
 之所以项目中使用bio也没有感受到阻塞是因为 项目使用了多线程的方式去掩盖住了阻塞
+
+
+讲义：
+Channel在nio中代替了Stream流 他既可以读也可以写，是双向的，Channel进行的操作需要借助Buffer这个类
+
+
+Buffer：
+    Buffer顾名思义是一个缓冲区，它代表一段内存当中可读写的区域，当向Channel中写数据的时候，Channel也会写入Buffer
+当从Channel中读数据的时候，Channel也会从Buffer中读数据，由此可以看出 不只是Channel支持双向操作Buffer也可以进行双向操作。
+
+既 然 Buffer 支 持 读 与 写 的 双 向 操 作 那 让 我 们 来 看 一 下 其 具 体 实 现
+Buffer的内部拥有三个指针，分别是position(位置),limit（）,capacity(能力，容量)
+    position 代表写的位置，初始位置为可操作内存块的起始位
+    limit 初始状态与capacity相同，代表了写到的最远位置，（服务于读服务，防止读到没有写入的地方）
+    capacity 代表这个缓冲区最大容量 （不出意外他将一直不动）
+写模式转换为读模式：
+    要从buffer中读取数据，首先要将写模式转换为读模式，要调用Buffer的flip(翻转)函数，将模式从写模式转换设置为读模式
+调用了flip后，函数会在Buffer内部会做一系列操作
+1.首先position回到起始位
+2.limit指向写入到最远的位置
+3.capacity 不动
+读模式转换为写模式：
+     要从buffer中写入数据，首先要将读模式转换为写模式，要调用Buffer的clear(清扫)函数，将模式从读模式转换设置为写模式
+调用了clear后，函数会在Buffer内部会做一系列操作
+1.首先position回到起始位
+2.limit由 指向写入到最远的位置，重新回到
+3.capacity 不动
+这里要特殊讲解以下clear ，虽然clear名字叫clear，但事实上他只是在移动指针而已，并没有去清除数据。但是 如果继续写入数据。
+数据依然会从position指针指向的位置开始写起，那么就会覆盖掉原来已经写入的数据
+
+读数据有两种模式：
+1. 一下子全部读取干净
+2. 只读一半，剩一半，剩下一半数据期望以后还可以读到，可是想在读取这部分数据之前，调整为写模式。
+此时由读模式转换为写模式的方法就不可以用clear了 ，需要使用compact（压缩）
+调用compact后，函数会在Buffer内部做一系列操作
+1.首先将未读取的数据放入Buffer内存模型的初始位置（未读数据前移）
+2.position指针跳过未读数据块，指向空白数据块
+
+Channel:
+    前面已经讲过，Channel可以通过Buffer 读取操作数据   ，但如果有两个Channel的话，两个Channel之间也可以进行数据的传输 。
+    Channel类有很多 下面介绍几个比较重要的Channel类。
+    1.FileChannel 文件的数据交换数据传输
+    2.SserverSocketChannel   进行网络间传输C
+    3.SocketChannel     进行网络间的传输
