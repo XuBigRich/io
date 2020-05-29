@@ -27,7 +27,7 @@ public class ChatHandler implements Runnable {
     @Override
     public void run() {
         try {
-            //存储了新上线用户
+            //往服务器对象存储了新上线用户
             chatServer.addClient(socket);
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String msg;
@@ -35,6 +35,7 @@ public class ChatHandler implements Runnable {
             while ((msg = reader.readLine()) != null) {
                 String fwdMsg = "客户端[" + socket.getPort() + "]:" + msg + "\n";
                 System.out.println();
+                //将该线程收到的消息转发给该服务器下的所有socket对象
                 chatServer.forwardMessage(socket, fwdMsg);
                 //检查y用户是否准备退出
                 if (chatServer.readToQuit(msg)) {
