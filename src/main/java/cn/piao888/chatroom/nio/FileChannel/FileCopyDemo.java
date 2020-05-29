@@ -34,7 +34,9 @@ public class FileCopyDemo {
                     fileOutputStream = new FileOutputStream(target);
                     int i = 0;
                     byte[] bytes = new byte[1024];
+                    //每次读会从流中 将字节存入bytes缓存中
                     while ((i = fileInputStream.read(bytes, 0, bytes.length)) != -1) {
+                        //每次写会将bytes写到流中
                         fileOutputStream.write(bytes);
                     }
                 } catch (FileNotFoundException e) {
@@ -69,7 +71,7 @@ public class FileCopyDemo {
                     e.printStackTrace();
                 } catch (IOException e) {
                     e.printStackTrace();
-                }finally {
+                } finally {
                     close(fileInputStream);
                     close(fileOutputStream);
                 }
@@ -102,7 +104,7 @@ public class FileCopyDemo {
                         //将Buffer状态改为读状态
                         byteBuffer.clear();
                     }
-//                    错误示范  这样会一直 一直去写，造成了 nio非常非常非常大，在短时间内达到了11个G
+//                    错误示范  这样会一直 一直去写，造成了 nio非常非常非常大，在短时间内达到了11个G 只因为没有把byteBuffer转为写状态
                     /*while ((fin.read(byteBuffer)) != -1) {
                         fout.write(byteBuffer);
                     }*/
@@ -110,7 +112,7 @@ public class FileCopyDemo {
                     e.printStackTrace();
                 } catch (IOException e) {
                     e.printStackTrace();
-                }finally {
+                } finally {
                     close(fin);
                     close(fout);
                 }
@@ -137,7 +139,7 @@ public class FileCopyDemo {
                     e.printStackTrace();
                 } catch (IOException e) {
                     e.printStackTrace();
-                }finally {
+                } finally {
                     close(fin);
                     close(fout);
                 }
