@@ -20,8 +20,8 @@ public class FileCopyDemo {
     }
 
     public static void main(String[] args) throws IOException {
-        File source = new File("/Users/xuhongzhi/code/io/src/main/java/cn/piao888/chatroom/nio/nio说明");
-        File target = new File("/Users/xuhongzhi/code/io/src/main/resources/nio说明");
+        File source = new File("/Users/xuhongzhi/studen/io/src/main/java/cn/piao888/chatroom/nio/nio说明");
+        File target = new File("/Users/xuhongzhi/studen/io/src/main/resources/nio说明");
         //===========stream 流方式的io拷贝===========
         //不使用Buffer缓存
         FileCopyRunner noBufferStreamCopy = new FileCopyRunner() {
@@ -104,7 +104,7 @@ public class FileCopyDemo {
                         //将Buffer状态改为读状态
                         byteBuffer.clear();
                     }
-//                    错误示范  这样会一直 一直去写，造成了 nio非常非常非常大，在短时间内达到了11个G 只因为没有把byteBuffer转为写状态
+//                    错误示范  这样会一直 一直去写，造成了 《nio说明》这个文件非常非常非常大，在短时间内达到了11个G 只因为没有把byteBuffer转为写状态
                     /*while ((fin.read(byteBuffer)) != -1) {
                         fout.write(byteBuffer);
                     }*/
@@ -118,7 +118,7 @@ public class FileCopyDemo {
                 }
             }
         };
-//        nioBufferCopy.copyFile(source, target);
+        nioBufferCopy.copyFile(source, target);
 
         //通道间的文件拷贝  (不使用Buffer)
         FileCopyRunner nioTransferCopy = new FileCopyRunner() {
@@ -146,6 +146,6 @@ public class FileCopyDemo {
 
             }
         };
-        nioTransferCopy.copyFile(source, target);
+//        nioTransferCopy.copyFile(source, target);
     }
 }
