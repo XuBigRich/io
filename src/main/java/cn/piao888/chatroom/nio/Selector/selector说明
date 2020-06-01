@@ -1,0 +1,25 @@
+使用Channel遇到的问题：
+    因为Channel是非阻塞式的，当没有数据的时候，Channel就处于一个空闲的状态，但是数据随时都有可能传输过来，所以如果我们想要知道Channel
+通道现在正在工作，我们需要时时刻刻去监控他的状态。不停的查看是否他是否处于工作状态
+
+selector解决方案：
+    Java也意识到了这个问题，于是开发了一个工具类selector，我们只需要注册channel通道到selector，那么selector就可以帮着我们监控这三个
+通道所处于的状，于是我们就不需要去监听每一个通道了，我们只需要监控selector 就可以知道，哪些channel处于工作状态了，
+
+channel的状态n：
+    channel的状态也不是一成不变的。serversocket 与socketchannel。
+     socket 客户端与用户端 建立连接  那么客户端socketChannel将会处于connect状态   ，ServerSocketChannel 就会处于accept状态
+     他们俩同时会 进入read 状态  与writer状态
+
+将Channel 注册至selector ：
+    将Channel注册 至selector 后 selector会返还一个 selectorKey的东西  我们可以把他看作这个Channel的id
+
+    我们可以通过interestOps（） 方法，得知selectorykey 对应的Channel  的状态是什么
+
+    可以通过readOps（）方法，得知selectorykey 对应的Channel   处于哪些可操作的状态下
+
+    还有channel（）方法
+
+    selector（） 方法
+
+    attachment（） 方法
