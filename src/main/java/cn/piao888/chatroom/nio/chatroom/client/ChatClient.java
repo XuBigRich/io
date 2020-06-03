@@ -67,14 +67,13 @@ public class ChatClient {
     private void start() throws IOException {
         client = SocketChannel.open();
         client.configureBlocking(false);
-        selector.isOpen();
+        selector = Selector.open();
         client.register(selector, SelectionKey.OP_CONNECT);
         client.connect(new InetSocketAddress(host, port));
         while (true) {
             selector.select();
             Set<SelectionKey> selectionKeySet = selector.selectedKeys();
             for (SelectionKey key : selectionKeySet) {
-
                 handls(key);
             }
             selectionKeySet.clear();
@@ -82,7 +81,6 @@ public class ChatClient {
     }
 
     private void handls(SelectionKey key) throws IOException {
-        //CONNECT事件 -- 连接就绪事件
         if (key.isConnectable()) {
             SocketChannel socketChannel = (SocketChannel) key.channel();
             //判断连接动作是否已经完成
@@ -111,9 +109,12 @@ public class ChatClient {
             return;
         }
         wBuffer.clear();
-        wBuffer.put(msg.getBytes());
+        wBuffer.put(charset.encode(msg));
+        //这个地方必须要加
+        wBuffer.flip();
+//        System.out.println(charset.decode(wBuffer).toString());
         client.write(wBuffer);
-        if(readToQuit(msg)){
+        if (readToQuit(msg)) {
             close(selector);
         }
     }
@@ -123,12 +124,14 @@ public class ChatClient {
         while ((socketChannel.read(rBuffer)) > 0) ;
         rBuffer.flip();
         String msg = String.valueOf(charset.decode(rBuffer));
+//        String msg = String.valueOf(charset.decode(rBuffer));
         return msg;
 
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         ChatClient chatClient = new ChatClient();
+        chatClient.start();
     }
 
 }

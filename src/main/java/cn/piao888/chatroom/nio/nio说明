@@ -15,10 +15,17 @@ Channel在nio中代替了Stream流 他既可以读也可以写，是双向的，
 
 
 Buffer：
-    Buffer顾名思义是一个缓冲区，它代表一段内存当中可读写的区域，当向Channel中写数据的时候，Channel也会写入Buffer
-当从Channel中读数据的时候，Channel也会从Buffer中读数据，由此可以看出 不只是Channel支持双向操作Buffer也可以进行双向操作。
+    Buffer顾名思义是一个缓冲区，它代表一段内存当中可读写的区域，
+    当向Channel中写数据的时候，Channel也会先写入Buffer，再从buffer中读取出来
+    当从Channel中读数据的时候，Channel也会将数据写入Buffer中，然后我们从Buffer中读取数据
+      由此可以看出 不只是Channel支持双向操作Buffer也可以进行双向操作
 
-既 然 Buffer 支 持 读 与 写 的 双 向 操 作 那 让 我 们 来 看 一 下 其 具 体 实 现
+    重点总结&提示&警告⚠️：凡是使用Buffer中的数据，一定是读取操作，既然是读取操作，就需要使用flip方法，将Buffer状态改为读状态
+这个地方我踩过很多次坑了！！！！！！！！！！！！！！！！！！！！！
+往Buffer中写数据的时候也要现将Buffer中的数据清空再写，使用clear方法 去清空Buffer中的数据
+
+
+======既 然 Buffer 支 持 读 与 写 的 双 向 操 作 那 让 我 们 来 看 一 下 其 具 体 实 现======
 Buffer的内部拥有三个指针，分别是position(位置),limit（）,capacity(能力，容量)
     position 代表写的位置，初始位置为可操作内存块的起始位
     limit 初始状态与capacity相同，代表了写到的最远位置，（服务于读服务，防止读到没有写入的地方）

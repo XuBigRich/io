@@ -9,6 +9,18 @@ import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.Set;
 
+/**
+ * 这里特别讲解以下什么情况下Channel.read 返回0  什么情况下返回 -1
+ * 返回-1：
+ * read返回-1说明客户端的数据发送完毕，并且主动的close socket。
+ * 所以在这种场景下，（服务器程序）你需要关闭socketChannel并且取消key，最好是退出当前函数。
+ * 注意，这个时候服务端要是继续使用该socketChannel进行读操作的话，就会抛出“远程主机强迫关闭一个现有的连接”的IO异常。
+ * 返回0：
+ * 其实read返回0有3种情况，一是某一时刻socketChannel中当前（注意是当前）没有数据可以读，这时会返回0。
+ * 其次是bytebuffer的position等于limit了，即bytebuffer的remaining等于0，这个时候也会返回0。
+ * 最后一种情况就是客户端的数据发送完毕了（注意看后面的程序里有这样子的代码），
+ * 这个时候客户端想获取服务端的反馈调用了recv函数，若服务端继续read，这个时候就会返回0。
+ */
 
 public class ChatServer {
     private static int DEFAULT_PORT = 8888;
@@ -77,55 +89,56 @@ public class ChatServer {
 
     private void handles(SelectionKey key) throws IOException {
         //Accept事件-和客户端建立了连接
-        if(key.isAcceptable()){
-            ServerSocketChannel server= (ServerSocketChannel)key.channel();
-            SocketChannel socketChannel =server.accept();
+        if (key.isAcceptable()) {
+            ServerSocketChannel server = (ServerSocketChannel) key.channel();
+            SocketChannel socketChannel = server.accept();
             socketChannel.configureBlocking(false);
-            socketChannel.register(selector,SelectionKey.OP_READ);
-            System.out.println("客户端["+getClientName(socketChannel)+"]已连接。。");
+            socketChannel.register(selector, SelectionKey.OP_READ);
+            System.out.println("客户端[" + getClientName(socketChannel) + "]已连接。。");
         }
         //read事件-客户端传输过来了数据 给服务器端
         else if (key.isReadable()) {
-               SocketChannel socketChannel=(SocketChannel)key.channel();
-               String fwdMsg=receive(socketChannel);
-               //如果消息为空则证明 通道出现了问题
-                if(fwdMsg.isEmpty()){
-                    //出现了问题就要给他断开 ,让selector不再监听这个通道
+            SocketChannel socketChannel = (SocketChannel) key.channel();
+            String fwdMsg = receive(socketChannel);
+            //如果消息为空则证明 通道出现了问题
+            if (fwdMsg.isEmpty()) {
+                //出现了问题就要给他断开 ,让selector不再监听这个通道
+                key.cancel();
+                //让当前调用的select函数马上返回，用以更新状态 ，这样就让selector重新审视了一下自己监听通道的最新状态
+                selector.wakeup();
+            } else {
+                forwardMassage(socketChannel, fwdMsg);
+                if (readToQuit(fwdMsg)) {
                     key.cancel();
-                    //让当前调用的select函数马上返回，用以更新状态 ，这样就让selector重新审视了一下自己监听通道的最新状态
                     selector.wakeup();
-                }else{
-                    forwardMassage(socketChannel,fwdMsg);
-                    if(readToQuit(fwdMsg)){
-                         key.cancel();
-                         selector.wakeup();
-                         forwardMassage(socketChannel,"有个兄弟退出了");
-                    }
+                    forwardMassage(socketChannel, "有个兄弟退出了");
                 }
+            }
 
         }
     }
-    public int getClientName(SocketChannel socketChannel){
-       return socketChannel.socket().getPort();
+
+    public int getClientName(SocketChannel socketChannel) {
+        return socketChannel.socket().getPort();
     }
 
-    private void forwardMassage(SocketChannel  client, String fwdMsg) throws IOException {
+    private void forwardMassage(SocketChannel client, String fwdMsg) throws IOException {
 
-        for(SelectionKey key:selector.keys()){
-          Channel socketChannel=(SocketChannel) key.channel();
-          //判断如果是serverSocketChannel就 忽略对他的处理
-            if ( socketChannel instanceof ServerSocketChannel) {
+        for (SelectionKey key : selector.keys()) {
+            Channel socketChannel = key.channel();
+            //判断如果是serverSocketChannel就 忽略对他的处理
+            if (socketChannel instanceof ServerSocketChannel) {
                 continue;
             }
             //保证channel是一个正常状态，即channel没有被关闭，且selector也没有被关闭
-            if(key.isValid()&&client!=socketChannel){
+            if (key.isValid() && client != socketChannel) {
                 //先清空缓存中的数据
                 wBuffer.clear();
-                wBuffer.put(charset.encode(getClientName(client)+":"+fwdMsg));
+                wBuffer.put(charset.encode(getClientName(client) + ":" + fwdMsg));
                 //将buffer改为读模式，也就是上面将数据写入到Buffer里边后，再从里面读出来
                 wBuffer.flip();
-                while(wBuffer.hasRemaining()){
-                    SocketChannel socket= (SocketChannel)socketChannel;
+                while (wBuffer.hasRemaining()) {
+                    SocketChannel socket = (SocketChannel) socketChannel;
                     //socket 从wBuffer中读出数据，再写入到socket中
                     socket.write(wBuffer);
                 }
@@ -133,12 +146,19 @@ public class ChatServer {
         }
     }
 
+    /**
+     * 转发函数
+     * @param socketChannel
+     * @return
+     * @throws IOException
+     */
     private String receive(SocketChannel socketChannel) throws IOException {
         rBuffer.clear();
-        StringBuffer stringBuffer=new StringBuffer();
-        while((socketChannel.read(rBuffer))>0){
+        StringBuffer stringBuffer = new StringBuffer();
+        while ((socketChannel.read(rBuffer)) > 0) {
+            //只要是读操作，就一定要先将模式转变 ，这个地方我踩坑了
             rBuffer.flip();
-           String msg= String.valueOf(charset.decode(rBuffer));
+            String msg = String.valueOf(charset.decode(rBuffer));
             stringBuffer.append(msg);
             rBuffer.clear();
         }
@@ -164,6 +184,6 @@ public class ChatServer {
 
     public static void main(String[] args) {
         ChatServer chatServer = new ChatServer();
-
+        chatServer.start();
     }
 }
