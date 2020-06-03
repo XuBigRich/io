@@ -8,7 +8,7 @@ interface FileCopyRunner {
     void copyFile(File source, File target) throws IOException;
 }
 
-public class FileCopyDemo {
+public class  FileCopyDemo {
     public static void close(Closeable closeable) {
         if (closeable != null) {
             try {

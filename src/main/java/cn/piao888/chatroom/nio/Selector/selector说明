@@ -12,7 +12,8 @@ channel的状态n：
      他们俩同时会 进入read 状态  与writer状态
 
 将Channel 注册至selector ：
-    将Channel注册 至selector 后 selector会返还一个 selectorKey的东西  我们可以把他看作这个Channel的id
+    将Channel注册 至selector 后 selector会返还一个 selectorKey的东西  我们可以把他看作这个Channel的id， selectorykey
+    包含了我们所要想知道的所有信息，如事件名称，事件所属通道等
 
     我们可以通过interestOps（） 方法，得知selectorykey 对应的Channel  的状态是什么
 
@@ -23,3 +24,5 @@ channel的状态n：
     selector（） 方法
 
     attachment（） 方法
+
+
