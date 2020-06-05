@@ -1,0 +1,20 @@
+aio是一个真正的异步io，其原理是应用程序调用立刻返回后，系统内核帮助监视主动告诉应用程序有消息来了。
+
+aio中两个非常重要的通道
+    AsyncSocketChannel   AsyncServerSocketChannel
+    他们对应nio中的
+    SocketChannel        ServerSocketChannel
+
+    accept/connect
+    服务器端调用AsyncServerSocketChannel要接收客户端发来的连接请求，这个操作需要调用accept方法
+    客户端  AsyncSocketChannel 要发送连接请求 这个方法就是connect 方法
+    read/write
+    AsyncSocketChannel   AsyncServerSocketChannel 都支持read与write方法
+
+        accept/connect/read/write   都支持异步调用
+
+    其实现方法
+
+
+        1.通过Future
+        2.CompletionHandler

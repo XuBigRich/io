@@ -64,19 +64,25 @@ public class ChatClient {
         }
     }
 
-    private void start() throws IOException {
-        client = SocketChannel.open();
-        client.configureBlocking(false);
-        selector = Selector.open();
-        client.register(selector, SelectionKey.OP_CONNECT);
-        client.connect(new InetSocketAddress(host, port));
-        while (true) {
-            selector.select();
-            Set<SelectionKey> selectionKeySet = selector.selectedKeys();
-            for (SelectionKey key : selectionKeySet) {
-                handls(key);
+    private void start() {
+        try {
+            client = SocketChannel.open();
+            client.configureBlocking(false);
+            selector = Selector.open();
+            client.register(selector, SelectionKey.OP_CONNECT);
+            client.connect(new InetSocketAddress(host, port));
+            while (true) {
+                selector.select();
+                Set<SelectionKey> selectionKeySet = selector.selectedKeys();
+                for (SelectionKey key : selectionKeySet) {
+                    handls(key);
+                }
+                selectionKeySet.clear();
             }
-            selectionKeySet.clear();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            close(selector);
         }
     }
 
