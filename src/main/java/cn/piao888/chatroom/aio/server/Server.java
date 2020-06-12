@@ -12,6 +12,18 @@ import java.util.Map;
 
 /**
  * @author hongzhi.xu
+ *
+ * 经过学习，我对socket的异步读写产生了新的，跟深刻的理解，首先要知道不同的异步调用者回调的传参是不一样的
+ * 例如： 读取与写入
+ *      回调传参是读写了几个字节，与attachment。
+ *      accept
+ *      回调就是 生成的socketchannel 与 attachment
+ *  下面分别介绍一下 异步读写 时的入参与 accept入参的区别与不同。
+ *      clientChannel.read(buffer, info, handler);
+ *         第一个参数 可以理解为从clintChannel通道中读取出数据放入到buffer中，
+ *         第二三个参数 当成功读取完数据并确认成功后，  调用handler对象的completed方法，并传给他相关的attachment，与成功读写了几个参数
+ *          completed(Integer result, Object attachment)
+ *
  */
 public class Server {
     final int DEFAULT_PORT = 8888;
@@ -82,7 +94,7 @@ public class Server {
                 serverSocketChannel.accept(null, this);
             }
 
-            //针对刚刚建立好连接的channel 我们开始 读他发给的消息
+            //针对刚刚建立好连接的Sockethannel 我们开始 读他发给的消息
             AsynchronousSocketChannel clientChannel = result;
             if (clientChannel != null && clientChannel.isOpen()) {
                 ClientHandler handler = new ClientHandler(clientChannel);
@@ -90,7 +102,8 @@ public class Server {
                 Map<String, Object> info = new HashMap<>();
                 info.put("type", "read");
                 info.put("buffer", buffer);
-                //我们需要异步的调用读取
+                //我们需要让刚刚生成的SocketChanel进行异步的读取数据
+                // 首先声明一个Buffer用以存储读取出来的数据，传入的attachment进行辅助操作,传入异步调用处理者，其中属性有刚刚生成的哪个socketChannel
                 clientChannel.read(buffer, info, handler);
             }
         }
@@ -101,6 +114,9 @@ public class Server {
             //处理错误
         }
 
+        /**
+         * 消息的异步处理者  内核会回调这个类
+         */
         private class ClientHandler implements CompletionHandler<Integer, Object> {
             private AsynchronousSocketChannel channel;
 
@@ -116,13 +132,20 @@ public class Server {
                     ByteBuffer byteBuffer = (ByteBuffer) info.get("buffer");
                     byteBuffer.flip();
                     info.put("type", "write");
+                    //向发送数据的socketchannel 写回数据，与attachment 还是当前对象处理  （异步写数据，写成功后又会生成一个回调）
                     channel.write(byteBuffer, info, this);
+                    //清空byteBuffer  至此 安排给系统内核的回调 已完成
                     byteBuffer.clear();
                 }
+                //判断为写回调，在内核调用写动作完成后会执行
                 if ("write".equals(type)) {
+                    //声明一个ByteBuffer
                     ByteBuffer buffer = ByteBuffer.allocate(1024);
+                    //给attachment赋值 表示介些来要进行读取任务了
                     info.put("type", "read");
                     info.put("buffer", buffer);
+                    //给当前socketChannel新建立一个 异步监听读取 数据的任务
+                    // 传入参数 读出来的数据要放入的buffer，attachment，要回调的对象。
                     channel.read(buffer, info, this);
                 }
             }

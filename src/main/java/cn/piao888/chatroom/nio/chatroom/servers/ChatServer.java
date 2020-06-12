@@ -26,13 +26,14 @@ public class ChatServer {
     private static int DEFAULT_PORT = 8888;
     private static final String QUIT = "quit";
     private final static int BUFFER = 1024;
-    //设置统一编码为utf-8
+   /* 设置统一编码为utf-8*/
     private Charset charset = Charset.forName("UTF-8");
     //用户指定服务器端口时使用
     private int port;
 
     //Socket通道
     private ServerSocketChannel server;
+    /*多路复用器*/
     private Selector selector;
 
     //用于读取通道消息的缓冲区
