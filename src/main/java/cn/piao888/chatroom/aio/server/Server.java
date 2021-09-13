@@ -62,7 +62,7 @@ public class Server {
             //绑定监听端口
             serverSocketChannel.bind(new InetSocketAddress(DEFAULT_PORT));
             System.out.println("服务器已经启动成功正在监听：" + DEFAULT_PORT + "端口");
-            //accept有连个重载函数  一个是无参的 一个是有两个参数的
+            //accept有两个重载函数  一个是无参的 一个是有两个参数的
             // accept(A attachment, CompletionHandler<AsynchronousSocketChannel,? super A> handler);
             //前面的attachment函数代表了为 执行函数提供信息的一个Object对象
 //            serverSocketChannel.accept();

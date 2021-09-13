@@ -8,7 +8,7 @@ interface FileCopyRunner {
     void copyFile(File source, File target) throws IOException;
 }
 
-public class  FileCopyDemo {
+public class FileCopyDemo {
     public static void close(Closeable closeable) {
         if (closeable != null) {
             try {
@@ -37,7 +37,7 @@ public class  FileCopyDemo {
                     //每次读会从流中 将字节存入bytes缓存中
                     while ((i = fileInputStream.read(bytes, 0, bytes.length)) != -1) {
                         //每次写会将bytes写到流中
-                        fileOutputStream.write(bytes);
+                        fileOutputStream.write(bytes, 0, i);
                     }
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
@@ -49,7 +49,7 @@ public class  FileCopyDemo {
                 }
             }
         };
-//        noBufferStreamCopy.copyFile(source,target);
+//        noBufferStreamCopy.copyFile(source, target);
         //使用Buffer缓存
         FileCopyRunner BufferStreamCopy = new FileCopyRunner() {
             @Override
@@ -64,8 +64,9 @@ public class  FileCopyDemo {
 
                     byte[] bytes = new byte[1024];
                     int result;
-                    while ((result = fileInputStream.read(bytes)) != -1) {
+                    while ((result = bufferedInputStream.read(bytes)) != -1) {
                         bufferedOutputStream.write(bytes, 0, result);
+                        bufferedOutputStream.flush();
                     }
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
@@ -78,7 +79,7 @@ public class  FileCopyDemo {
 
             }
         };
-
+//        BufferStreamCopy.copyFile(source, target);
         //===========channel 通道方式的io拷贝===========
         //通道使用buffer的文件拷贝
         FileCopyRunner nioBufferCopy = new FileCopyRunner() {
@@ -118,7 +119,7 @@ public class  FileCopyDemo {
                 }
             }
         };
-        nioBufferCopy.copyFile(source, target);
+//        nioBufferCopy.copyFile(source, target);
 
         //通道间的文件拷贝  (不使用Buffer)
         FileCopyRunner nioTransferCopy = new FileCopyRunner() {

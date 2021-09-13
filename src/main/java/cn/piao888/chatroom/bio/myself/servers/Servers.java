@@ -6,6 +6,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 
+/**
+ * 使用Thread.start的方式启动线程
+ */
 public class Servers {
     public static ArrayList<Socket> sockets= new ArrayList<>();
     public static void main(String[] args) throws IOException  {
