@@ -1,11 +1,8 @@
 package cn.piao888.chatroom.nio.chatroom.client;
 
-import sun.nio.ch.SocketAdaptor;
 
 import java.io.*;
 import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.nio.charset.Charset;
