@@ -13,6 +13,8 @@ import java.nio.charset.Charset;
  * @since 2021/9/13
  */
 public class NoBackChatServer {
+
+    public static SynchronizedStack<PollerEvent> eventCache = new SynchronizedStack<>();
     private static int DEFAULT_PORT = 8888;
     private static final String QUIT = "quit";
     private final static int BUFFER = 1024;
