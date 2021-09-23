@@ -2,9 +2,11 @@ package cn.piao888.chatroom.tomcat;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.CancelledKeyException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.Iterator;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -110,6 +112,7 @@ public class NioBlockingSelector {
     protected static class BlockPoller extends Thread {
         protected volatile boolean run = true;
         protected Selector selector = null;
+        protected final SynchronizedQueue<Runnable> events = new SynchronizedQueue<>();
         protected final AtomicInteger wakeupCounter = new AtomicInteger(0);
 
         public void disable() {
@@ -128,6 +131,7 @@ public class NioBlockingSelector {
 
             wakeup();
         }
+
         public void add(final NioSocketWrapper key, final int ops, final KeyReference ref) {
             if (key == null) return;
             final SocketChannel ch = key.socketChannel;
@@ -137,6 +141,88 @@ public class NioBlockingSelector {
 
         public void wakeup() {
             if (wakeupCounter.addAndGet(1) == 0) selector.wakeup();
+        }
+
+        public boolean events() {
+            Runnable r = null;
+            //读取events队列大小，当有socket建立链接时，队列就会放入值
+            int size = events.size();
+            //遍历队列中的每一个事件
+            for (int i = 0; i < size && (r = events.poll()) != null; i++) {
+                //执行运行
+                r.run();
+            }
+            //返回size是否大于0
+            return (size > 0);
+        }
+
+        public void run() {
+            while (run) {
+                try {
+                    //检查事件队列，并遍历
+                    events();
+                    int keyCount = 0;
+                    try {
+                        int i = wakeupCounter.get();
+                        if (i > 0)
+                            keyCount = selector.selectNow();
+                        else {
+                            wakeupCounter.set(-1);
+                            //启动多路复用器的检查工作
+                            keyCount = selector.select(1000);
+                        }
+                        wakeupCounter.set(0);
+                        if (!run) break;
+                    } catch (NullPointerException x) {
+                        continue;
+                    } catch (CancelledKeyException x) {
+                        continue;
+                    } catch (Throwable x) {
+                        continue;
+                    }
+
+                    Iterator<SelectionKey> iterator = keyCount > 0 ? selector.selectedKeys().iterator() : null;
+
+                    // Walk through the collection of ready keys and dispatch
+                    // any active event.
+                    while (run && iterator != null && iterator.hasNext()) {
+                        SelectionKey sk = iterator.next();
+                        NioSocketWrapper attachment = (NioSocketWrapper) sk.attachment();
+                        try {
+                            iterator.remove();
+                            sk.interestOps(sk.interestOps() & (~sk.readyOps()));
+                            if (sk.isReadable()) {
+                                countDown(attachment.getReadLatch());
+                            }
+                            if (sk.isWritable()) {
+                                countDown(attachment.getWriteLatch());
+                            }
+                        } catch (CancelledKeyException ckx) {
+                            sk.cancel();
+                            countDown(attachment.getReadLatch());
+                            countDown(attachment.getWriteLatch());
+                        }
+                    }//while
+                } catch (Throwable t) {
+                }
+            }
+            events.clear();
+            if (selector.isOpen()) {
+                try {
+                    // Cancels all remaining keys
+                    selector.selectNow();
+                } catch (Exception ignore) {
+                }
+            }
+            try {
+                selector.close();
+            } catch (Exception ignore) {
+            }
+        }
+
+        public void countDown(CountDownLatch latch) {
+            if (latch == null) return;
+            latch.countDown();
         }
     }
 

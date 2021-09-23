@@ -44,4 +44,8 @@ public class NoBackChatServer {
         //创建多路复用器
         selectorPool.open();
     }
+
+    public static void main(String[] args) {
+
+    }
 }

@@ -26,7 +26,7 @@ public class ChatServer {
     private static int DEFAULT_PORT = 8888;
     private static final String QUIT = "quit";
     private final static int BUFFER = 1024;
-   /* 设置统一编码为utf-8*/
+    /* 设置统一编码为utf-8*/
     private Charset charset = Charset.forName("UTF-8");
     //用户指定服务器端口时使用
     private int port;
@@ -149,11 +149,17 @@ public class ChatServer {
 
     /**
      * 转发函数
+     *
      * @param socketChannel
      * @return
      * @throws IOException
      */
     private String receive(SocketChannel socketChannel) throws IOException {
+        System.out.println("测试keyFor返回什么");
+        SelectionKey selectionKey = socketChannel.keyFor(selector);
+        System.out.println(selectionKey.isReadable());
+        System.out.println(selectionKey.isAcceptable());
+        System.out.println(selectionKey.isWritable());
         rBuffer.clear();
         StringBuffer stringBuffer = new StringBuffer();
         while ((socketChannel.read(rBuffer)) > 0) {
