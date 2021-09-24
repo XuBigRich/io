@@ -32,11 +32,18 @@ public class NioSelectorPool {
     protected long sharedSelectorTimeout = 30000;
     protected int maxSpareSelectors = -1;
     protected boolean enabled = true;
+    //线程安全的计数器
     protected AtomicInteger active = new AtomicInteger(0);
     protected AtomicInteger spare = new AtomicInteger(0);
     protected ConcurrentLinkedQueue<Selector> selectors =
             new ConcurrentLinkedQueue<>();
 
+    /**
+     * 生成一个多路复用器
+     *
+     * @return
+     * @throws IOException
+     */
     protected Selector getSharedSelector() throws IOException {
         if (SHARED && SHARED_SELECTOR == null) {
             synchronized (NioSelectorPool.class) {
@@ -48,6 +55,11 @@ public class NioSelectorPool {
         return SHARED_SELECTOR;
     }
 
+    /**
+     *  获取到多路复用器
+     * @return
+     * @throws IOException
+     */
     public Selector get() throws IOException {
         if (SHARED) {
             return getSharedSelector();

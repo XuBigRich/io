@@ -3,9 +3,8 @@ package cn.piao888.chatroom.tomcat;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.CancelledKeyException;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
+import java.util.Iterator;
 import java.util.Iterator;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -18,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class NioBlockingSelector {
     protected Selector sharedSelector;
-    //这个类继承自Thread
+    //这个类继承自Thread 他会一直检查多路复用器所监听的socket
     protected BlockPoller poller;
     private static AtomicInteger threadCounter = new AtomicInteger(0);
     private final SynchronizedStack<KeyReference> keyReferenceStack =
@@ -31,7 +30,7 @@ public class NioBlockingSelector {
         poller.selector = sharedSelector;
         poller.setDaemon(true);
         poller.setName("NioBlockingSelector.BlockPoller-" + (threadCounter.getAndIncrement()));
-        //线程开始执行
+        //线程开始执行 这线程的使命是 不断监听多路复用器产生的事件
         poller.start();
     }
 
@@ -43,6 +42,14 @@ public class NioBlockingSelector {
         }
     }
 
+    /**
+     * 实际执行读写的方法
+     *
+     * @param buf
+     * @param socket
+     * @param writeTimeout
+     * @return
+     */
     public int write(ByteBuffer buf, SocketChannel socket, long writeTimeout) {
         SelectionKey key = socket.keyFor(sharedSelector);
         if (key == null) System.err.println("Key no longer registered");
@@ -109,6 +116,9 @@ public class NioBlockingSelector {
         return 1;
     }
 
+    /**
+     * 这个类是用来检测多路复用器 的检测事件的
+     */
     protected static class BlockPoller extends Thread {
         protected volatile boolean run = true;
         protected Selector selector = null;
@@ -220,10 +230,59 @@ public class NioBlockingSelector {
             }
         }
 
+
+
+
+
         public void countDown(CountDownLatch latch) {
             if (latch == null) return;
             latch.countDown();
         }
+
+        public void cancel(SelectionKey sk, NioSocketWrapper key, int ops) {
+            if (sk != null) {
+                sk.cancel();
+                sk.attach(null);
+                if (SelectionKey.OP_WRITE == (ops & SelectionKey.OP_WRITE)) countDown(key.getWriteLatch());
+                if (SelectionKey.OP_READ == (ops & SelectionKey.OP_READ)) countDown(key.getReadLatch());
+            }
+        }
+
+        private class RunnableAdd implements Runnable {
+
+            private final SocketChannel ch;
+            private final NioSocketWrapper key;
+            private final int ops;
+            private final KeyReference ref;
+
+            public RunnableAdd(SocketChannel ch, NioSocketWrapper key, int ops, KeyReference ref) {
+                this.ch = ch;
+                this.key = key;
+                this.ops = ops;
+                this.ref = ref;
+            }
+
+            @Override
+            //这个方法会被BlockPoller 类的run方法调用的events方法调用
+            public void run() {
+                SelectionKey sk = ch.keyFor(selector);
+                try {
+                    if (sk == null) {
+                        sk = ch.register(selector, ops, key);
+                        ref.key = sk;
+                    } else if (!sk.isValid()) {
+                        cancel(sk, key, ops);
+                    } else {
+                        sk.interestOps(sk.interestOps() | ops);
+                    }
+                } catch (CancelledKeyException cx) {
+                    cancel(sk, key, ops);
+                } catch (ClosedChannelException cx) {
+                    cancel(null, key, ops);
+                }
+            }
+        }
+
     }
 
     public static class KeyReference {
