@@ -12,18 +12,19 @@ import java.util.Map;
 
 /**
  * @author hongzhi.xu
- *
+ * <p>
+ * 使用CompletionHandler的方式进行异步调用
+ * <p>
  * 经过学习，我对socket的异步读写产生了新的，跟深刻的理解，首先要知道不同的异步调用者回调的传参是不一样的
  * 例如： 读取与写入
- *      回调传参是读写了几个字节，与attachment。
- *      accept
- *      回调就是 生成的socketchannel 与 attachment
- *  下面分别介绍一下 异步读写 时的入参与 accept入参的区别与不同。
- *      clientChannel.read(buffer, info, handler);
- *         第一个参数 可以理解为从clintChannel通道中读取出数据放入到buffer中，
- *         第二三个参数 当成功读取完数据并确认成功后，  调用handler对象的completed方法，并传给他相关的attachment，与成功读写了几个参数
- *          completed(Integer result, Object attachment)
- *
+ * 回调传参是读写了几个字节，与attachment。
+ * accept
+ * 回调就是 生成的socketchannel 与 attachment
+ * 下面分别介绍一下 异步读写 时的入参与 accept入参的区别与不同。
+ * clientChannel.read(buffer, info, handler);
+ * 第一个参数 可以理解为从clintChannel通道中读取出数据放入到buffer中，
+ * 第二三个参数 当成功读取完数据并确认成功后，  调用handler对象的completed方法，并传给他相关的attachment，与成功读写了几个参数
+ * completed(Integer result, Object attachment)
  */
 public class Server {
     final int DEFAULT_PORT = 8888;
@@ -71,7 +72,9 @@ public class Server {
                 serverSocketChannel.accept(null, new AcceptHandler());
                 //因为accept是非阻塞式的，他会立即返回可能会造成因主线程执行完毕，导致的进程结束
                 // 所以通过添加while循环与read搭配使用，accept就不会立即结束祝线程
+                System.out.println(1);
                 System.in.read();
+                System.out.println(2);
             }
 
         } catch (IOException e) {
@@ -97,6 +100,7 @@ public class Server {
             //针对刚刚建立好连接的Sockethannel 我们开始 读他发给的消息
             AsynchronousSocketChannel clientChannel = result;
             if (clientChannel != null && clientChannel.isOpen()) {
+                //客户端回调实现
                 ClientHandler handler = new ClientHandler(clientChannel);
                 ByteBuffer buffer = ByteBuffer.allocate(1024);
                 Map<String, Object> info = new HashMap<>();
@@ -104,6 +108,7 @@ public class Server {
                 info.put("buffer", buffer);
                 //我们需要让刚刚生成的SocketChanel进行异步的读取数据
                 // 首先声明一个Buffer用以存储读取出来的数据，传入的attachment进行辅助操作,传入异步调用处理者，其中属性有刚刚生成的哪个socketChannel
+                //read会将从clientChannel读取到的流放入buffer中 、 info会将附件发送给处理程序 ， handler是异步处理程序
                 clientChannel.read(buffer, info, handler);
             }
         }

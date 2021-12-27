@@ -11,6 +11,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 /**
+ * 使用Future 的方式进行异步调用
+ *
  * @Author： hongzhi.xu
  * @Date: 2020/6/4 4:15 下午
  * @Version 1.0
@@ -44,9 +46,9 @@ public class Client {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
             while (true) {
                 String msg = bufferedReader.readLine();
-                byte[] bytes=msg.getBytes();
+                byte[] bytes = msg.getBytes();
 //                ByteBuffer byteBuffer=ByteBuffer.wrap(bytes);
-                ByteBuffer byteBuffer=ByteBuffer.allocate(1024);
+                ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
                 byteBuffer.put(bytes);
                 byteBuffer.flip();
                 //write调用成功后会返回函数向通道写入了多少个字节
@@ -56,11 +58,11 @@ public class Client {
                 byteBuffer.clear();
                 //视频中使用的是flip；
                 byteBuffer.flip();
-                Future<Integer> readResult= socketChannel.read(byteBuffer );
+                Future<Integer> readResult = socketChannel.read(byteBuffer);
                 //read会阻塞
                 readResult.get();
                 byteBuffer.clear();
-                System.out.println(new String(byteBuffer.array() ));
+                System.out.println(new String(byteBuffer.array()));
             }
 
         } catch (IOException e) {
@@ -75,7 +77,7 @@ public class Client {
     }
 
     public static void main(String[] args) {
-        Client client=new Client();
+        Client client = new Client();
         client.start();
     }
 }
