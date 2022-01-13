@@ -68,8 +68,9 @@ public class BlockChannel {
                 }
             }
         }).start();
-        //等待socketChannel 将读事件注册成功， 注册读时间 由《网络调试助手》 完成 ，且必须在三秒内 完成读事件注册，否则当前select 就不会监听读事件了
-        Thread.sleep(3000);
+        //等待socketChannel 将读事件注册成功， 注册读事件 由《网络调试助手》 完成 ，且必须在四秒内（这4秒是为了让select 在阻塞前知道 有读事件被注册）
+        // 必须要完成读事件注册select 才能进行阻塞休眠，否则当前select 就不会监听读事件了
+        Thread.sleep(4000);
         while (true) {
             //阻塞的等待 有事件发生
             int keyCount = blockChannel.selector.select();
