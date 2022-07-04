@@ -32,6 +32,8 @@ public class Client {
                 System.out.println("关闭了serverSocket");
             } catch (IOException e) {
                 e.printStackTrace();
+            }catch(NullPointerException e){
+                System.out.println();
             }
         }
     }

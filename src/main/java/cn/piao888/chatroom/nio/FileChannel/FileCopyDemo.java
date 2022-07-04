@@ -3,6 +3,7 @@ package cn.piao888.chatroom.nio.FileChannel;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.StandardOpenOption;
 
 interface FileCopyRunner {
     void copyFile(File source, File target) throws IOException;
@@ -81,7 +82,7 @@ public class FileCopyDemo {
         };
 //        BufferStreamCopy.copyFile(source, target);
         //===========channel 通道方式的io拷贝===========
-        //通道使用buffer的文件拷贝
+        //通道使用buffer的文件拷贝  零拷贝 一种，用户空间与内核空间共享内存
         FileCopyRunner nioBufferCopy = new FileCopyRunner() {
             @Override
             public void copyFile(File source, File target) {
@@ -134,7 +135,7 @@ public class FileCopyDemo {
                     long size = fin.size();
                     while (transferred != size) {
                         //fin.size() 可以知道源文件byte的长度
-                        transferred += fin.transferTo(0, size, fout);
+                        transferred += fin.transferTo(transferred, size, fout);
                     }
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
