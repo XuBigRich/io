@@ -65,7 +65,7 @@ public class ChatServer {
             while (true) {
                 //阻塞式调用，如果selector所监听的通道一个监听事件都没有发生，
                 // 那么select将一直阻塞 ，直到有通道发生了selector 所监听的事件，就会有返回值
-                selector.select();
+                int i=selector.select();
                 //当select函数不再阻塞，说明我们监视的某个事件发生了，
                 // 我们可以通过selectedKeys()得到知晓哪些通道被监听的事件发生了
                 Set<SelectionKey> keys = selector.selectedKeys();
@@ -96,6 +96,8 @@ public class ChatServer {
             socketChannel.configureBlocking(false);
             socketChannel.register(selector, SelectionKey.OP_READ);
             System.out.println("客户端[" + getClientName(socketChannel) + "]已连接。。");
+            //让当前调用的select函数马上返回，用以更新状态 ，这样就让selector重新审视了一下自己监听通道的最新状态
+            selector.wakeup();
         }
         //read事件-客户端传输过来了数据 给服务器端
         else if (key.isReadable()) {
