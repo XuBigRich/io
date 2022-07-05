@@ -74,6 +74,20 @@ public class SocketRecord {
             //申请一个直接内存 大小为1024
             ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
             try {
+                /**
+                 * 1、read什么时候返回-1
+                 *
+                 * read返回-1说明客户端的数据发送完毕，并且主动的close socket。所以在这种场景下，（
+                 * 服务器程序）你需要关闭socketChannel并且取消key，最好是退出当前函数。
+                 * 注意，这个时候服务端要是继续使用该socketChannel进行读操作的话，就会抛出“远程主机强迫关闭一个现有的连接”的IO异常。
+                 *
+                 * 2、read什么时候返回0
+                 *
+                 * 其实read返回0有3种情况，一是某一时刻socketChannel中当前（注意是当前）没有数据可以读，
+                 * 这时会返回0，其次是bytebuffer的position等于limit了，即bytebuffer的remaining等于0，
+                 * 这个时候也会返回0，最后一种情况就是客户端的数据发送完毕了（注意看后面的程序里有这样子的代码），
+                 * 这个时候客户端想获取服务端的反馈调用了recv函数，若服务端继续read，这个时候就会返回0。
+                 */
                 while (socketChannel.read(byteBuffer) > 0) {
                     byteBuffer.flip();
                     //创建一个数组大小恰好为，byteBuffer读取到的数据数量
