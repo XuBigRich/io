@@ -1,10 +1,15 @@
 package cn.piao888.chatroom.shunxuIo;
 
+import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
+
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
+import java.nio.channels.Channel;
 import java.nio.channels.FileChannel;
+import java.util.Arrays;
 
 /**
  * 顺序读写
@@ -43,7 +48,7 @@ public class Sequence {
             //通过所及文件访问类，获取文件通道Nio
             FileChannel targetFileChannel = randomAccessTargetFile.getChannel();
             //使用读写模式映射文件到直接内存  申请一个G（1024*1024*1024）的内存空间用户文件的读写
-            map = targetFileChannel.map(FileChannel.MapMode.READ_WRITE, 0, 20);
+            map = targetFileChannel.map(FileChannel.MapMode.READ_WRITE, 0, 9);
             //从指定位置写入
             map.position(index);
             //向内存中放入数据
@@ -73,7 +78,7 @@ public class Sequence {
         try {
             randomAccessTargetFile = new RandomAccessFile(file, "rw");
             FileChannel targetFileChannel = randomAccessTargetFile.getChannel();
-            map = targetFileChannel.map(FileChannel.MapMode.READ_WRITE, 0, index);
+            map = targetFileChannel.map(FileChannel.MapMode.READ_ONLY, 0, index);
             //声明一个字节数组
             byte[] byteArr = new byte[700];
             //从内存中取出index个字节放入byteArr数组
@@ -94,9 +99,9 @@ public class Sequence {
         if (!file.exists()) {
             file.createNewFile();
         }
-        long index = Sequence.fileWrite(filePath, "你好！", 0);
+        long index = Sequence.fileWrite(filePath, "你好", 3);
 //        Thread.sleep(50000);
-        System.out.println(fileRead(filePath, 20));
+        System.out.println(fileRead(filePath, 9));
 
         System.out.println(file.length());
     }

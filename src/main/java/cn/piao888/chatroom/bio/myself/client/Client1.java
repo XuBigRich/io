@@ -6,7 +6,7 @@ import java.net.Socket;
 public class Client1 {
     public static void main(String[] args) throws IOException {
         String ip = "127.0.0.1";
-        int port = 8888;
+        int port = 9999;
         Socket socket = null;
         BufferedWriter write = null;
         BufferedReader reader = null;

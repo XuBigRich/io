@@ -145,7 +145,6 @@ public class FileCopyDemo {
                     close(fin);
                     close(fout);
                 }
-
             }
         };
 //        nioTransferCopy.copyFile(source, target);
