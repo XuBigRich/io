@@ -1,17 +1,12 @@
-package cn.piao888.chatroom.shunxuIo.socketRecord;
+package cn.piao888.chatroom.mmap.socketRecord;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.*;
 import java.nio.charset.Charset;
-import java.nio.file.Paths;
 import java.util.Set;
 
 /**
@@ -26,7 +21,7 @@ public class SocketRecord {
     //选择器
     public static Selector selector;
     public static MappedByteBuffer mappedByteBuffer;
-    public static String filePath = "/Users/xuhongzhi/studen/io/src/main/java/cn/piao888/chatroom/shunxuIo/socketRecord/记录";
+    public static String filePath = "/Users/xuhongzhi/studen/io/src/main/java/cn/piao888/chatroom/mmap/socketRecord/记录";
     public static Charset charset = Charset.forName("UTF-8");
 
     static {
@@ -34,6 +29,8 @@ public class SocketRecord {
             selector = Selector.open();
             RandomAccessFile accessFile = new RandomAccessFile(filePath, "rw");
             mappedByteBuffer = accessFile.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, 1024 * 1024 * 1024);
+            //判断是否是直接内存（内核内存）
+            System.out.println(mappedByteBuffer.isDirect());
             createServerSocketChannel(9999);
         } catch (IOException e) {
             e.printStackTrace();
@@ -71,7 +68,7 @@ public class SocketRecord {
             }
         } else if (key.isReadable()) {
             SocketChannel socketChannel = (SocketChannel) key.channel();
-            //申请一个直接内存 大小为1024
+            //申请一个堆内存 大小为1024
             ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
             try {
                 /**

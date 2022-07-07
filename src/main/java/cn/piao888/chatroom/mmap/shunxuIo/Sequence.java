@@ -1,15 +1,8 @@
-package cn.piao888.chatroom.shunxuIo;
+package cn.piao888.chatroom.mmap.shunxuIo;
 
-import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.nio.MappedByteBuffer;
-import java.nio.channels.Channel;
 import java.nio.channels.FileChannel;
-import java.util.Arrays;
 
 /**
  * 顺序读写
@@ -67,7 +60,7 @@ public class Sequence {
      * 顺序读
      *
      * @param filePath 文件位置
-     * @param index    申请内存的大小
+     * @param index    申请内存的大小 （申请映射的文件大小）
      * @return
      */
     public static String fileRead(String filePath, long index) {
@@ -78,11 +71,20 @@ public class Sequence {
         try {
             randomAccessTargetFile = new RandomAccessFile(file, "rw");
             FileChannel targetFileChannel = randomAccessTargetFile.getChannel();
+            //以读写模式 从文件的起始位置（position=0），映射文件大小为 index  （从0号位置 读index大小的文件装入内存）
             map = targetFileChannel.map(FileChannel.MapMode.READ_ONLY, 0, index);
-            //声明一个字节数组
+            //声明一个字节数组  这样弄不太好把我输入的文件大小
             byte[] byteArr = new byte[700];
             //从内存中取出index个字节放入byteArr数组
             map.get(byteArr, 0, (int) index);
+            //逐个从内从中取出文件
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            //判断缓冲区中是否有数据
+            map.flip();
+            while (map.hasRemaining()) {
+                byteArrayOutputStream.write(map.get());
+            }
+            System.out.println(byteArrayOutputStream);
             //将取出来的字符串数组 变为字符串
             return new String(byteArr);
         } catch (IOException e) {
@@ -94,15 +96,15 @@ public class Sequence {
     }
 
     public static void main(String[] args) throws InterruptedException, IOException {
-        String filePath = "/Users/xuhongzhi/studen/io/src/main/java/cn/piao888/chatroom/shunxuIo/测试";
+        String filePath = "/Users/xuhongzhi/studen/io/src/main/java/cn/piao888/chatroom/mmap/shunxuIo/测试";
         File file = new File(filePath);
         if (!file.exists()) {
             file.createNewFile();
         }
-        long index = Sequence.fileWrite(filePath, "你好", 3);
+//        long index = Sequence.fileWrite(filePath, "你好", 3);
 //        Thread.sleep(50000);
         System.out.println(fileRead(filePath, 9));
 
-        System.out.println(file.length());
+//        System.out.println(file.length());
     }
 }
