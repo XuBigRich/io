@@ -27,6 +27,8 @@ public class TargetFile extends File {
     public volatile long readPosition;
     //映射的内存
     public MappedByteBuffer byteBuffer;
+    //用于读写的内存映射
+    public MappedByteBuffer readBuffer;
     //当前文件的文件通道
     public FileChannel fileChannel;
     //默认存储路径
@@ -38,6 +40,7 @@ public class TargetFile extends File {
         this.fileChannel = randomAccessFile.getChannel();
         //映射一个512Mb的内存大小到bytebuffer
         this.byteBuffer = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0, 1024 * 1024 * 512);
+        this.readBuffer = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0, 1024 * 1024 * 512);
     }
 
 }
