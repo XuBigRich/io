@@ -3,7 +3,8 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**
 !**/src/test/**
-
+src/main/java/cn/piao888/chatroom/kafka/follow
+src/main/java/cn/piao888/chatroom/mmap/socketRecord/记录
 ### STS ###
 .apt_generated
 .classpath
