@@ -58,6 +58,15 @@ public class Server {
              *  所以我们需要AsynchronousChannelGroup 它里面所包含的线程去处理这些回调。
              *
              *    当有回调时，系统就去AsynchronousChannelGroup这个线程池中寻找可用的线程资源，来进行回调的执行
+             *jdk方法解析：
+             *     AsynchronousServerSocketChannel.open();
+             *     系统会先选择一个 当前操作系统 所支持的 AsynchronousChannelProvider， windows 提供一个 WindowsAsynchronousChannelProvider，也可以自定义一个提供者
+             *     拿到 AsynchronousChannelProvider后 会调用 openAsynchronousServerSocketChannel 方法 传入一个 AsynchronousChannelGroup
+             *     异步channel的分组管理，目的是为了资源共享。一个AsynchronousChannelGroup绑定一个线程池，
+             *     这个线程池执行两个任务：
+             *     1.处理IO事件和派发CompletionHandler。
+             *     2. AsynchronousServerSocketChannel创建的时候可以传入一个AsynchronousChannelGroup，
+             *         那么通过AsynchronousServerSocketChannel创建的 AsynchronousSocketChannel将同属于一个组，共享资源。
              */
             serverSocketChannel = AsynchronousServerSocketChannel.open();
             //绑定监听端口
