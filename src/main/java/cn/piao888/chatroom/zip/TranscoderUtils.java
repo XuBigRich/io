@@ -74,7 +74,7 @@ public class TranscoderUtils {
 //            FileAttribute<Set<PosixFilePermission>> fileAttributes = PosixFilePermissions
 //                    .asFileAttribute(permissions);
 //            //创建临时文件夹
-//            //linux
+//            //linux 这个地方会有时区问题
 //            Path files = Files.createTempFile(path+File.separator, null,null,fileAttributes);
             //创建临时文件夹
             Path files = Files.createTempFile(path, null,".jpg");
