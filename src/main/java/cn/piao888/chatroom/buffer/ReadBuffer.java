@@ -36,7 +36,20 @@ public class ReadBuffer {
         System.out.println(bos);
     }
 
+    public static void test() throws IOException {
+        InputStream inputStream = new FileInputStream("/Users/xuhongzhi/inspur/excel/e.excel");
+        ByteArrayOutputStream byteArrayInputStream=new ByteArrayOutputStream();
+        byte[] bytes=new byte[1024];
+        int i=0;
+        while((i=inputStream.read(bytes))!=-1){
+            byteArrayInputStream.write(bytes,0,i);
+        }
+
+        FileOutputStream fileOutputStream=new FileOutputStream("/Users/xuhongzhi/inspur/excel/aaa");
+        fileOutputStream.write(byteArrayInputStream.toByteArray());
+    }
     public static void main(String[] args) throws IOException {
-        read(file);
+//        read(file);
+        test();
     }
 }
