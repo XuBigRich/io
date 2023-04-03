@@ -34,7 +34,7 @@ public class WriteTask extends RecursiveAction {
         //计算每个线程要处理的任务量
         Integer taskCount = count / threads;
         //要么要处理的数据小于 cpu个数  ，要么 将数据按照cpu等分
-        if (ossFile.getDeviceIds().size() <= 2 * WriteTask.threads) {
+        if (ossFile.getDeviceIds().size() <= taskCount * 2 || (count != 0 && taskCount == 0)) {
             ossFile.writeFile();
         } else {
             this.writeTasks = new ArrayList<>();
