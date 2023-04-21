@@ -35,6 +35,7 @@ public class OssFile {
     private String separator;
     public ByteBuffer byteNonDirectBuffer;
     public ByteBuffer byteDirectBuffer;
+    private FileChannel channel;
 
     public OssFile(String filePath, Long fileOffset, List<String> deviceIds) throws IOException {
         final String[] split = filePath.split(File.pathSeparator);
@@ -47,10 +48,10 @@ public class OssFile {
     }
 
     public Long contentSize(List<String> deviceIds) throws UnsupportedEncodingException {
-        Long size = 1024000000l;
-//        for (String d : deviceIds) {
-//            size += (d + separator).getBytes("UTF-8").length;
-//        }
+        Long size = 0l;
+        for (String d : deviceIds) {
+            size += (d + separator).getBytes("UTF-8").length;
+        }
         return size;
     }
 
@@ -58,7 +59,9 @@ public class OssFile {
         this.deviceIds.forEach(e -> {
             final byte[] bytes = (e + separator).getBytes(StandardCharsets.UTF_8);
             mappedByteBuffer.put(bytes);
-            mappedByteBuffer.clear();
+            mappedByteBuffer.force();
+            //不可以写下面的，否则会清空已经写了的数据，即使force之后
+//            mappedByteBuffer.clear();
         });
 //        mappedByteBuffer=null;
 //        System.gc();
@@ -70,7 +73,8 @@ public class OssFile {
     }
 
     public void creteDirMap() throws IOException {
-        this.mappedByteBuffer = accessFile.getChannel().map(FileChannel.MapMode.READ_WRITE, this.fileOffset, contentSize(deviceIds));
+        this.channel = accessFile.getChannel();
+        this.mappedByteBuffer = channel.map(FileChannel.MapMode.READ_WRITE, this.fileOffset, contentSize(deviceIds));
         System.out.println(mappedByteBuffer.isDirect());
     }
 
@@ -124,10 +128,10 @@ public class OssFile {
                     ossFile.creteDirMap();
                 }
                 if ("7".equals(next)) {
-                    for (int i = 0; i < 10240000; i++) {
-                        ossFile.writeFile();
-                    }
-                    ossFile.mappedByteBuffer.force();
+                    ossFile.writeFile();
+                    ossFile.accessFile.close();
+                    ossFile.channel.close();
+
                 }
                 if ("8".equals(next)) {
                     ossFile.mappedByteBuffer = null;
